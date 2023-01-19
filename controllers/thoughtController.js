@@ -55,16 +55,15 @@ const thoughtController = {
   // delete Thought
   deleteThought(req, res) {
     Thought.findOneAndDelete({ _id: req.params.id })
-      .then((dbThoughtData) => {
-        if (!dbThoughtData) {
-          return res.status(404).json({ message: "No thought with this id!" });
-        }
-        return User.findOneAndUpdate(
-          { thoughts: req.params.id },
-          { $pull: { thoughts: req.params.id } }, 
-          { new: true }
-        );
-      })
+      .then((thought) => 
+      !thought
+      ? res.status(404).json({ message: 'No thought with that ID' })
+      : User.findOneAndUpdate(
+        { thoughts: req.params.id },
+        { $pull: { thoughts: req.params.id } }, 
+        { new: true }
+      ))
+
       .then((user) => 
         !user
         ? res.status(404).json({ message: 'No user with that ID' })
@@ -73,20 +72,18 @@ const thoughtController = {
   },
 
   // add reaction
-  addReaction({ params, body }, res) {
+  addReaction(req, res) {
     Thought.findOneAndUpdate(
-      { _id: params.thoughtId },
-      { $addToSet: { reactions: body } },
+      { _id: req.params.thoughtId },
+      { $addToSet: { reactions: req.body } },
       { new: true, runValidators: true }
     )
-      .then((dbThoughtData) => {
-        if (!dbThoughtData) {
-          res.status(404).json({ message: "No thought with this id" });
-          return;
-        }
-        res.json(dbThoughtData);
-      })
-      .catch((err) => res.json(err));
+    .then((thought) => 
+    !thought
+    ? res.status(404).json({ message: 'No thought with this id!' })
+    : res.json(thought)
+        )
+    .catch((err) => res.status(500).json(err)); 
   },
 
   // delete reaction
@@ -96,8 +93,12 @@ const thoughtController = {
       { $pull: { reactions: { reactionId: params.reactionId } } },
       { new: true }
     )
-      .then((dbThoughtData) => res.json(dbThoughtData))
-      .catch((err) => res.json(err));
+    .then((thought) => 
+    !thought
+    ? res.status(404).json({ message: 'No thought with this id!' })
+    : res.json(thought)
+        )
+    .catch((err) => res.status(500).json(err)); 
   },
 };
 
