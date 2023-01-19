@@ -11,22 +11,13 @@ const userController = {
   // get a user 
   getUserById(req, res) {
     User.findOne({ _id: req.params.id })
-      .populate({
-        path: "thoughts",
-        select: "-__v",
-      })
-      .populate({
-        path: "friends",
-        select: "-__v",
-      })
       .select("-__v")
-      .then((user) => {
-        if (!user) {
-          return res.status(404).json({ message: "No user found with that ID!" });
-        }
-        res.json(user);
-      })
-      .catch((err) => res.status(500).json(err));
+      .then((user) =>
+      !user
+        ? res.status(404).json({ message: 'No user with this id!' })
+        : res.json(user)
+      )
+      .catch((err) => res.status(500).json(err)); 
   },
 
   // create user
@@ -48,7 +39,7 @@ const userController = {
     )
     .then((user) =>
     !user
-      ? res.status(404).json({ message: 'No course with this id!' })
+      ? res.status(404).json({ message: 'No user with this id!' })
       : res.json(user)
     )
     .catch((err) => res.status(500).json(err)); 
@@ -68,11 +59,10 @@ const userController = {
 
   // add friend
   addFriend(req, res) {
-    console.log(req.params);
     User.findOneAndUpdate(
       { _id: req.params.userId },
       { $addToSet: { friends: req.params.friendId} },
-      { new: true }
+      { new: true , runValidators: true}
     )
       .then((user) => 
       !user
